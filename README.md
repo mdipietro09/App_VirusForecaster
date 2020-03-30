@@ -1,3 +1,3 @@
 # CoronaVirus Forecast
 
-https://stockforecaster.herokuapp.com/
+https://virusforecaster.herokuapp.com/
