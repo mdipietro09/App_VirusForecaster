@@ -1,1 +1,3 @@
-# FlaskApp_VirusForecaster
+# CoronaVirus Forecast
+
+https://stockforecaster.herokuapp.com/

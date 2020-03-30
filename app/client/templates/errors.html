@@ -1,0 +1,14 @@
+
+{% extends 'base.html' %}
+
+{% block title %} Error {% endblock %}
+
+{% block head %}
+ {{ super() }}
+{% endblock %}
+
+{% block body %}
+<h3>Error :(</h3>
+<p>{{msg}}<p>
+<a href="{{ url_for('index') }}">Go Home</a>
+{% endblock %}
