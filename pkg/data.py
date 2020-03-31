@@ -10,7 +10,7 @@ class data():
         self.dtf_deaths = pd.read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv", sep=",")
         self.geo = self.dtf_cases[['Country/Region','Lat','Long']].drop_duplicates("Country/Region", keep='first')
         self.countrylist = ["World"] + self.geo["Country/Region"].unique().tolist()
-    
+
     
     @staticmethod
     def group_by_country(dtf, country):
@@ -32,8 +32,6 @@ class data():
     
     def process_data(self, country):
         self.cases = self.group_by_country(self.dtf_cases, country)
-        self.deaths = self.group_by_country(self.dtf_deaths, country)
-        self.mortality = self.calculate_mortality(self.deaths, self.cases)
-    
-    
-        
+        deaths = self.group_by_country(self.dtf_deaths, country)
+        self.cases["deaths"] = deaths
+        self.mortality = self.calculate_mortality(deaths, self.cases)
