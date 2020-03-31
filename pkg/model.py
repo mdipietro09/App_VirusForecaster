@@ -18,8 +18,8 @@ class model():
     
     
     @staticmethod
-    def fit_parametric(X, y, f):
-        model, cov = optimize.curve_fit(f, X, y, maxfev=10000)
+    def fit_parametric(X, y, f, p0):
+        model, cov = optimize.curve_fit(f, X, y, maxfev=10000, p0=p0)
         return model
     
     
@@ -40,7 +40,7 @@ class model():
         ## fit
         y = cases["data"].values
         t = np.arange(len(y))
-        model = self.fit_parametric(t, y, self.f)
+        model = self.fit_parametric(t, y, self.f, p0=[np.max(y), 1, 1])
         fitted = self.f(t, model[0], model[1], model[2])
         cases["forecast"] = fitted
         
