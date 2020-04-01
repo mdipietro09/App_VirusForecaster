@@ -38,12 +38,13 @@ class model():
     
     @staticmethod
     def add_diff(dtf):
-        dtf["diff"] = dtf["forecast"] - dtf["forecast"].shift(1)
-        idx = dtf[pd.isnull(dtf["data"])]["diff"].index[0]
+        dtf["delta_data"] = dtf["data"] - dtf["data"].shift(1)
+        dtf["delta_forecast"] = dtf["forecast"] - dtf["forecast"].shift(1)
+        idx = dtf[pd.isnull(dtf["data"])]["delta_forecast"].index[0]
         posx = dtf.index.tolist().index(idx)
         posx_a = posx - 1
         posx_b = posx + 1
-        dtf["diff"].iloc[posx] = (dtf["diff"].iloc[posx_a] + dtf["diff"].iloc[posx_b])/2
+        dtf["delta_forecast"].iloc[posx] = (dtf["delta_forecast"].iloc[posx_a] + dtf["delta_forecast"].iloc[posx_b])/2
         return dtf
 
     
@@ -76,19 +77,20 @@ class model():
         
 
     def plot(self, country):
-        fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(15,10))
+        fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(15,10))
         
-        ## main plots
+        ## 1st plot
+        ### main plots
         ax[0].scatter(self.dtf_out.index, self.dtf_out["data"], color="black", label="data")
         ax[0].plot(self.dtf_out.index, self.dtf_out["forecast"], label="forecast")
-        ## today vline
+        ### today vline
         ax[0].axvline(self.today, ls='--', color="black")
         ax[0].text(x=self.today, y=self.dtf_out["forecast"].max(), s="today", fontsize=15)
-        ## fill under the curve
+        ### fill under the curve
         ax[0].fill_between(self.dtf_out.index, self.dtf_out["forecast"], alpha=0.2)
-        ## deaths
+        ### deaths
         ax[0].bar(self.dtf_out.index, self.dtf_out["deaths"], color="red", label="deaths")
-        ## ax settings
+        ### ax settings
         fig.suptitle(country+": Forecast for 30 days from today", fontsize=20)
         ax[0].set_title("Cases: "+"{:,}".format(int(self.dtf_out["forecast"].max()))+
                         "      Deaths: "+"{:,}".format(int(self.dtf_out["deaths"].max())))
@@ -96,10 +98,16 @@ class model():
         ax[0].grid(True)
         ax[0].legend(loc="upper left")
         
-        ## second plot
-        ax[1].bar(self.dtf_out.index, self.dtf_out["diff"], alpha=0.4)
+        ## 2nd plot
+        ### main plots
+        ax[1].bar(self.dtf_out.index, self.dtf_out["delta_data"], color="black", alpha=0.7)
+        ax[1].plot(self.dtf_out.index, self.dtf_out["delta_forecast"])        
+        ### today vline
         ax[1].axvline(self.today, ls='--', color="black")
-        ax[1].set_title("New Cases Estimate")
+        ### fill under the curve
+        ax[1].fill_between(self.dtf_out.index, self.dtf_out["delta_forecast"], alpha=0.2)
+        ### ax settings
+        ax[1].set_title("New Cases")
         ax[1].yaxis.set_major_formatter(mplt.ticker.StrMethodFormatter('{x:,.0f}'))
         ax[1].grid(True)
         

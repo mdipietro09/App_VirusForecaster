@@ -3,7 +3,6 @@
 ###############################################################################
 
 import flask
-import pandas as pd
 
 from pkg.data import data
 from pkg.model import model
