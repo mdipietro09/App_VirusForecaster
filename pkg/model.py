@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from scipy import optimize
 import matplotlib.pyplot as plt
+import matplotlib as mplt
 import io
 import base64
 
@@ -33,6 +34,18 @@ class model():
         index = pd.date_range(start=start, periods=30, freq="D")
         index = index[1:]
         return index
+    
+    
+    @staticmethod
+    def add_diff(dtf):
+        dtf["delta_data"] = dtf["data"] - dtf["data"].shift(1)
+        dtf["delta_forecast"] = dtf["forecast"] - dtf["forecast"].shift(1)
+        idx = dtf[pd.isnull(dtf["data"])]["delta_forecast"].index[0]
+        posx = dtf.index.tolist().index(idx)
+        posx_a = posx - 1
+        posx_b = posx + 1
+        dtf["delta_forecast"].iloc[posx] = (dtf["delta_forecast"].iloc[posx_a] + dtf["delta_forecast"].iloc[posx_b])/2
+        return dtf
 
     
     def forecast(self, cases):
@@ -53,30 +66,51 @@ class model():
         preds = pd.DataFrame(data=forecast, index=idxdates, columns=["forecast"])
         self.dtf_out = cases.append(preds)
         
+        ## add diff
+        self.dtf_out = self.add_diff(self.dtf_out)
+                
         
     def add_deaths(self, mortality):
-        self.dtf_out["deaths"] = self.dtf_out[["data","forecast"]].apply(lambda x: 
-                                 int(mortality*x[0]) if not np.isnan(x[0]) else int(mortality*x[1]), 
-                                 axis=1)
+        self.dtf_out["deaths"] = self.dtf_out[["deaths","forecast"]].apply(lambda x: 
+                                 mortality*x[1] if np.isnan(x[0]) else x[0], 
+                                 axis=1)        
         
-    
+
     def plot(self, country):
-        ## main plots
-        fig, ax = plt.subplots(figsize=(15,10))
-        ax.scatter(self.dtf_out.index, self.dtf_out["data"], color="black", label="data")
-        ax.plot(self.dtf_out.index, self.dtf_out["forecast"], label="forecast")
-        ## today vline
-        ax.axvline(self.today, ls='--', color="black")
-        ax.text(x=self.today, y=self.dtf_out["forecast"].max(), s="today", fontsize=15)
-        ## fill under the curve
-        ax.fill_between(self.dtf_out.index, self.dtf_out["forecast"], alpha=0.2)
-        ## deaths
-        ax.bar(self.dtf_out.index, self.dtf_out["deaths"], color="red", label="deaths")
-        ## ax settings
+        fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(15,10))
+        
+        ## 1st plot
+        ### main plots
+        ax[0].scatter(self.dtf_out.index, self.dtf_out["data"], color="black", label="data")
+        ax[0].plot(self.dtf_out.index, self.dtf_out["forecast"], label="forecast")
+        ### today vline
+        ax[0].axvline(self.today, ls='--', color="black")
+        ax[0].text(x=self.today, y=self.dtf_out["forecast"].max(), s="today", fontsize=15)
+        ### fill under the curve
+        ax[0].fill_between(self.dtf_out.index, self.dtf_out["forecast"], alpha=0.2)
+        ### deaths
+        ax[0].bar(self.dtf_out.index, self.dtf_out["deaths"], color="red", label="deaths")
+        ### ax settings
         fig.suptitle(country+": Forecast for 30 days from today", fontsize=20)
-        plt.xticks(rotation=70) 
-        ax.grid(True)
-        ax.legend(loc="upper left")
+        ax[0].set_title("Cases: "+"{:,}".format(int(self.dtf_out["forecast"].max()))+
+                        "      Deaths: "+"{:,}".format(int(self.dtf_out["deaths"].max())))
+        ax[0].yaxis.set_major_formatter(mplt.ticker.StrMethodFormatter('{x:,.0f}'))
+        ax[0].grid(True)
+        ax[0].legend(loc="upper left")
+        
+        ## 2nd plot
+        ### main plots
+        ax[1].bar(self.dtf_out.index, self.dtf_out["delta_data"], color="black", alpha=0.7)
+        ax[1].plot(self.dtf_out.index, self.dtf_out["delta_forecast"])        
+        ### today vline
+        ax[1].axvline(self.today, ls='--', color="black")
+        ### fill under the curve
+        ax[1].fill_between(self.dtf_out.index, self.dtf_out["delta_forecast"], alpha=0.2)
+        ### ax settings
+        ax[1].set_title("New Cases")
+        ax[1].yaxis.set_major_formatter(mplt.ticker.StrMethodFormatter('{x:,.0f}'))
+        ax[1].grid(True)
+        
         ## save fig
         bytes_image = io.BytesIO()
         plt.savefig(bytes_image, format='png')
