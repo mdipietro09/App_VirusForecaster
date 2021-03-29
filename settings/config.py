@@ -4,7 +4,7 @@ import os
 
 
 ## App settings
-name = "Virus Forecaster"
+name = "Virus Forecaster application"
 
 host = "0.0.0.0"
 
