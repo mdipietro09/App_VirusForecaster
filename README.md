@@ -1,3 +1,3 @@
 # Dash App for Covid-19 Forecast
 
-https://virusforecaster.herokuapp.com/
+https://app-virus-forecaster.herokuapp.com/
